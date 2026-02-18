@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/organisms/header";
 import Footer from "@/components/organisms/footer";
 
@@ -9,10 +7,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div>
+    <div className="flex flex-col bg-background-1 min-h-screen">
       <Header />
-      {children}
-      <Footer/>
+      <main  className="flex-1 ">{children}</main>
+
+      <Footer />
     </div>
   );
 }

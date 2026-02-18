@@ -47,7 +47,7 @@ const MenuClient = ({ menuAvatar }: MenuClientProps) => {
 
           <div className="flex items-center gap-3">
             <Button variant="brand" asChild size="lg">
-              <Link href="/" className="text-text-caption-2">
+              <Link href="/#our-doctors" className="text-text-caption-2">
                 Book Appointment
               </Link>
             </Button>
@@ -97,7 +97,7 @@ const MenuClient = ({ menuAvatar }: MenuClientProps) => {
                   className="text-text-caption-2"
                   onClick={() => closeMobileMenu}
                 >
-                  <Link href="/">Book Appointment</Link>
+                  <Link href="/#our-doctors">Book Appointment</Link>
                 </Button>
               </nav>
             </div>
