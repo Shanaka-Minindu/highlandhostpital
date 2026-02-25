@@ -1,7 +1,7 @@
 "use server";
 import { DoctorData, ServerActionResponse } from "@/types";
 import { prisma } from "@/db/prisma";
-import { UserRole } from "@/lib/generated/prisma/enums";
+import { UserRole } from "@/lib/generated/prisma";
 
 
 
