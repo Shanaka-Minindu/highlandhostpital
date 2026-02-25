@@ -35,7 +35,7 @@ const ReviewCard = ({
             />
           ) : (
             <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400 text-4xl">{name.charAt(0)}</span>
+              <span className="text-gray-400 text-4xl">{patientName}</span>
             </div>
           )}
         </div>
@@ -64,7 +64,7 @@ const ReviewCard = ({
         </p>
 
         {/* reviewDate Stamp */}
-        <p className="text-text-caption-1 body-small ">{reviewDate}</p>
+        <p className="text-text-caption-1 body-small ">{reviewDate.split("T")[0]}</p>
       </CardContent>
     </Card>
   );

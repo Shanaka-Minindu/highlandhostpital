@@ -3,20 +3,34 @@ import React from "react";
 import { testimonialData } from "@/db/dummydata";
 import ReviewCard from "../molecules/review-card";
 
-interface TestimonialDataTyp{
-          id: string,
-patientName:string,
-rating: number,
-testimonialText:string,
-reviewDate:string,
-patientImage?: string
-}
+import { getTestimonials } from "@/lib/actions/testimonials.action";
+import { TestimonialDataTyp } from "@/types";
 
-const PatientTestimonials = () => {
- 
-          
-          const TestimonialData: TestimonialDataTyp[] = testimonialData;
+// interface TestimonialDataTyp{
+//           id: string,
+// patientName:string,
+// rating: number,
+// testimonialText:string,
+// reviewDate:string,
+// patientImage?: string
+// }
 
+const PatientTestimonials = async () => {
+  let TestimonialData: TestimonialDataTyp[] = [];
+  let fetchError: string;
+
+  try {
+    const result = await getTestimonials();
+    if (result.success && result.data) {
+      TestimonialData = result.data;
+    } else {
+      fetchError = result.message || "Failed to fetch Testimonials";
+    }
+  } catch (error) {
+    const msg =
+      error instanceof Error ? error.message : "Failed to load Testimonials";
+    fetchError = msg;
+  }
 
   const hasTestimonials = TestimonialData && TestimonialData.length > 0;
 
@@ -37,7 +51,7 @@ const PatientTestimonials = () => {
               key={review.id}
               id={review.id}
               patientName={review.patientName}
-              patientImage={review.patientImage||""}
+              patientImage={review.patientImage || ""}
               rating={review.rating}
               testimonialText={review.testimonialText}
               reviewDate={review.reviewDate}

@@ -3,17 +3,33 @@ import React from "react";
 import { doctorData } from "@/db/dummydata";
 import DoctorCard from "../molecules/doctorcard";
 
-interface OurDoctorsTyp {
-  id: string;
-  name: string;
-  specialty: string;
-  rating: number;
-  reviewCount: number;
-  imageUrl: string;
-}
-const OurDoctors = () => {
+import { getOurDoctors } from "@/lib/actions/doctor.actions";
+import { DoctorData } from "@/types";
+
+// interface OurDoctorsTyp {
+//   id: string;
+//   name: string;
+//   specialty: string;
+//   rating: number;
+//   reviewCount: number;
+//   imageUrl: string;
+// }
+const OurDoctors =async () => {
   // Check if data exists and has items
-  const DoctorData: OurDoctorsTyp[] = doctorData;
+  let DoctorData: DoctorData[] = [];
+let fetchError : string
+
+try{
+const result = await getOurDoctors();
+if(result.success&& result.data){
+  DoctorData = result.data
+}else{
+  fetchError = result.message || "Failed to fetch Doctors"
+}
+}catch(error){
+const msg = error instanceof Error? error.message : "Failed to load Doctors";
+    fetchError = msg;
+}
 
   const hasDoctors = DoctorData && DoctorData.length > 0;
 
