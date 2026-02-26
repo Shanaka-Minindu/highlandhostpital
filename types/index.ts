@@ -43,3 +43,8 @@ export interface DoctorTopCard{
   reviewCount : number;
   specializations :string[]
 }
+
+export interface DoctorAbout{
+  name:string;
+  brief:string
+}

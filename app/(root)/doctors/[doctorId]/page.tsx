@@ -1,3 +1,4 @@
+import DoctorProfileAbout from "@/components/organisms/doctor-profile/doctorprofile-about";
 import DoctorProfileTopCard from "@/components/organisms/doctor-profile/doctorprofile-topcard";
 import { getDoctorById } from "@/lib/actions/doctor.actions";
 import { notFound } from "next/navigation";
@@ -68,7 +69,7 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
           />
         </div>
         <div className="md:hidden"> Appointment Schedule</div>
-        <div>About Section</div>
+        <DoctorProfileAbout brief={doctorData.brief} name={doctorData.name}/>
         <div>Reviews</div>
       </div>
       <div className="hidden md:block">Appointment Schedule</div>
