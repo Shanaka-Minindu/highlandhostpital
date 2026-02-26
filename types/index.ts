@@ -29,6 +29,17 @@ export interface TestimonialDataTyp {
 }
 
 
-export interface BannerImageTyp extends BannerImage{
+export interface BannerImageTyp extends BannerImage{}
 
+export interface DoctorTopCard{
+  id:string;
+  image: string| null;
+  name:string;
+  specialty :string;
+  brief:string;
+  credentials:string;
+  languages:string[];
+  rating: number;
+  reviewCount : number;
+  specializations :string[]
 }
