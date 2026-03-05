@@ -1,7 +1,7 @@
-
 import DoctorProfileAbout from "@/components/organisms/doctor-profile/doctorprofile-about";
 import DoctorProfileReview from "@/components/organisms/doctor-profile/doctorprofile-review";
 import DoctorProfileTopCard from "@/components/organisms/doctor-profile/doctorprofile-topcard";
+import ScheduleAppointment from "@/components/organisms/doctor-profile/schedule-appointment";
 import { getDoctorById } from "@/lib/actions/doctor.actions";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -19,7 +19,6 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
     const result = await getDoctorById(doctorId);
     if (result.success || result.data) {
       docData = result;
-     
     } else {
       notFound();
     }
@@ -27,7 +26,7 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
     console.log(error);
     return (
       <div className="p-6 text-center text-red-500">
-        <p>We're Sorry, Something went wrong!!</p>
+        <p>We&apos;re Sorry, Something went wrong!!</p>
         <p>Please try refreshing the page or check back later</p>
       </div>
     );
@@ -54,8 +53,8 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
     return notFound();
   }
   return (
-    <div className="flex w-full flex-col md:flex-row justify-between">
-      <div className="flex flex-col gap-6 md:gap-8 md:max-w-[908px]">
+    <div className="flex w-full mx-auto justify-center max-w-[1376px] flex-col md:flex-row gap-7 p-4">
+      <div className="flex flex-col gap-6 md:gap-8 w-full md:max-w-[908px]">
         <div>
           <DoctorProfileTopCard
             credentials={doctorData.credentials}
@@ -70,11 +69,19 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
             specialty={doctorData.specialty}
           />
         </div>
-        <div className="md:hidden"> Appointment Schedule</div>
-        <DoctorProfileAbout brief={doctorData.brief} name={doctorData.name}/>
-        <DoctorProfileReview doctorId={doctorData.id} averageRating={doctorData.rating}/>
+        <div className="md:hidden">
+          {" "}
+          <ScheduleAppointment doctorId={doctorData.id} />
+        </div>
+        <DoctorProfileAbout brief={doctorData.brief} name={doctorData.name} />
+        <DoctorProfileReview
+          doctorId={doctorData.id}
+          averageRating={doctorData.rating}
+        />
       </div>
-      <div className="hidden md:block">Appointment Schedule</div>
+      <div className="hidden md:block">
+        <ScheduleAppointment doctorId={doctorData.id} />
+      </div>
     </div>
   );
 };

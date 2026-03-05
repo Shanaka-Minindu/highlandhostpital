@@ -1,6 +1,6 @@
 import { Department,BannerImage } from "../lib/generated/prisma/client";
 
-export interface ServerActionResponse<T = any> {
+export interface ServerActionResponse<T> {
   success: boolean;
   message?: string;
   data?: T;
@@ -47,4 +47,11 @@ export interface DoctorTopCard{
 export interface DoctorAbout{
   name:string;
   brief:string
+}
+
+export interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  startTimeUTC: Date;
+  endTimeUTC: Date;
 }
