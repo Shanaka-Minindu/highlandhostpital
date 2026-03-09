@@ -1,11 +1,14 @@
 import { Department,BannerImage } from "../lib/generated/prisma/client";
 
+export type FieldErrors = Record<string,string[]|undefined>; 
+
 export interface ServerActionResponse<T> {
   success: boolean;
   message?: string;
   data?: T;
   error?: string;
   errorType?: string;
+  fieldErrors?:FieldErrors;
 }
 
 export interface DepartmentData extends Department {}

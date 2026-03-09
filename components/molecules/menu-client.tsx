@@ -14,12 +14,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import MobileUserSigninOrAvatar from "./mobile-user-signinoravatar";
+import { Session } from "next-auth";
 
 interface MenuClientProps {
   menuAvatar: ReactNode;
+  session:Session | null
 }
 
-const MenuClient = ({ menuAvatar }: MenuClientProps) => {
+const MenuClient = ({ menuAvatar, session }: MenuClientProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const closeMobileMenu = () => {
@@ -104,8 +106,8 @@ const MenuClient = ({ menuAvatar }: MenuClientProps) => {
 
             {/* Sign In / Avatar at the Bottom (as seen in screenshot) */}
             
-              <SheetFooter className="w-full">
-            <MobileUserSigninOrAvatar onMobileActionComplete={closeMobileMenu}/>
+              <SheetFooter className="w-full pl-0">
+            <MobileUserSigninOrAvatar session={session} onMobileActionComplete={closeMobileMenu}/>
           </SheetFooter>
             
           </SheetContent>

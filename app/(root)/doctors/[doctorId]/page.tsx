@@ -54,7 +54,7 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
   }
   return (
     <div className="flex w-full mx-auto justify-center max-w-[1376px] flex-col md:flex-row gap-7 p-4">
-      <div className="flex flex-col gap-6 md:gap-8 w-full md:max-w-[908px]">
+      <div className="flex flex-col gap-6 md:gap-8 md:max-w-[908px]">
         <div>
           <DoctorProfileTopCard
             credentials={doctorData.credentials}

@@ -5,7 +5,11 @@ import Image from "next/image";
 import { APP_NAME } from "@/lib/constants";
 import MenuClient from "../molecules/menu-client";
 import SigninAvatar from "../molecules/signin-avatar";
-const Header: React.FC = () => {
+import { auth } from "@/auth";
+const Header: React.FC = async() => {
+
+  const session = await auth()
+
   return (
     <header className="w-full bg-background-2  top-0 z-50 py-3 ">
       {/* Left Section: Logo */}
@@ -18,7 +22,7 @@ const Header: React.FC = () => {
       </Link>
 
       {/* Right Section: Navigation & Actions */}
-      <MenuClient menuAvatar={<SigninAvatar/>}/>
+      <MenuClient session={session}  menuAvatar={<SigninAvatar/>}/>
       </div>
     </header>
   );
