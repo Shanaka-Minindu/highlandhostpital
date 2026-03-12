@@ -1,6 +1,6 @@
-import { Department,BannerImage } from "../lib/generated/prisma/client";
+import { Department, BannerImage } from "../lib/generated/prisma/client";
 
-export type FieldErrors = Record<string,string[]|undefined>; 
+export type FieldErrors = Record<string, string[] | undefined>;
 
 export interface ServerActionResponse<T> {
   success: boolean;
@@ -8,7 +8,7 @@ export interface ServerActionResponse<T> {
   data?: T;
   error?: string;
   errorType?: string;
-  fieldErrors?:FieldErrors;
+  fieldErrors?: FieldErrors;
 }
 
 export interface DepartmentData extends Department {}
@@ -31,25 +31,24 @@ export interface TestimonialDataTyp {
   patientImage?: string;
 }
 
+export interface BannerImageTyp extends BannerImage {}
 
-export interface BannerImageTyp extends BannerImage{}
-
-export interface DoctorTopCard{
-  id:string;
-  image: string| null;
-  name:string;
-  specialty :string;
-  brief:string;
-  credentials:string;
-  languages:string[];
+export interface DoctorTopCard {
+  id: string;
+  image: string | null;
+  name: string;
+  specialty: string;
+  brief: string;
+  credentials: string;
+  languages: string[];
   rating: number;
-  reviewCount : number;
-  specializations :string[]
+  reviewCount: number;
+  specializations: string[];
 }
 
-export interface DoctorAbout{
-  name:string;
-  brief:string
+export interface DoctorAbout {
+  name: string;
+  brief: string;
 }
 
 export interface TimeSlot {
@@ -57,4 +56,26 @@ export interface TimeSlot {
   endTime: string;
   startTimeUTC: Date;
   endTimeUTC: Date;
+}
+
+export interface PatientProfile {
+  id: string;
+  name: string;
+  phoneNumber?: string;
+  dateOfBirth?: string;
+  email: string;
+  address?: string;
+  image?: string;
+}
+
+export interface Appointment {
+  id: string;
+  doctorName: string;
+  doctorId: string;
+  specialty?: string;
+  date: string;
+  time: string;
+  status: "upcoming" | "completed" | "cancelled" | "no show" | "cash payment";
+  reasonForVisit: string;
+  isReviewed: boolean;
 }

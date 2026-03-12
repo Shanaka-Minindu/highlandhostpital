@@ -37,7 +37,7 @@ const UserDropdown = ({
         <Avatar className="h-10 w-10 border border-border cursor-pointer hover:opacity-80 transition">
           {image ? (
             <div className="relative h-full w-full">
-              <Image src={image} alt={name} fill className="object-cover" />
+              <Image src={image} alt={name} unoptimized fill className="object-cover" />
             </div>
           ) : (
             <AvatarFallback className="bg-slate-700 text-primary-foreground font-bold">
