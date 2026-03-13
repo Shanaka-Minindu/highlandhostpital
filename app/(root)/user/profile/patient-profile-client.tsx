@@ -1,7 +1,9 @@
-"use client"
+"use client";
+import EditPatientProfile from "@/components/molecules/user-profile/edit-patient-profile";
+import PersonalInformation from "@/components/organisms/user-profile/personal-information";
 import ProfileHeader from "@/components/organisms/user-profile/profileHeader";
 import { Appointment, PatientProfile } from "@/types";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 interface PatientProfileClientProps {
   patientData: PatientProfile;
@@ -20,12 +22,30 @@ const PatientProfileClient = ({
   totalPages,
   appointmentError,
 }: PatientProfileClientProps) => {
-    useEffect(()=>{
-        if(appointmentError){
+  const [isOpen, setIsOpen] = useState(false);
 
-        }
-    },[appointmentError])
-  return <div> <ProfileHeader userData={patientData}/></div>;
+  
+
+  useEffect(() => {
+    if (appointmentError) {
+    }
+  }, [appointmentError]);
+
+  return (
+    <div>
+      {" "}
+      <EditPatientProfile
+        dialogOpen={isOpen}
+        dialogClose={() => setIsOpen(false)}
+        patientData={patientData}
+      />
+      <ProfileHeader userData={patientData} />
+      <PersonalInformation
+        personalInfo={patientData}
+        editBtn={() => setIsOpen(true)}
+      />
+    </div>
+  );
 };
 
 export default PatientProfileClient;

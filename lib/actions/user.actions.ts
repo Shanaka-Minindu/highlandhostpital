@@ -1,6 +1,6 @@
 "use server";
-import { Appointment, PatientProfile, ServerActionResponse } from "@/types";
-import { loginSchema, signUpSchema } from "../validators";
+import { Appointment, PatientProfile, PatientProfileUpdateInput, ServerActionResponse } from "@/types";
+import { loginSchema, patientProfileUpdateSchema, signUpSchema } from "../validators";
 import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/auth";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
@@ -406,6 +406,71 @@ export async function updateUserImage(
           ? error.message
           : "Something went wrong while updating the image",
           errorType:"SERVER_ERROR"
+    };
+  }
+}
+
+
+export async function patientProfileUpdate(
+  data: PatientProfileUpdateInput
+): Promise<ServerActionResponse<null>> {
+  try {
+    // 1. Authenticate the user
+    const session = await auth();
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "You must be logged in to update your profile.",
+        errorType: "UNAUTHORIZED",
+      };
+    }
+
+    // 2. Validate data with Zod
+    const validatedFields = patientProfileUpdateSchema.safeParse(data);
+
+    if (!validatedFields.success) {
+      return {
+        success: false,
+        message: "Invalid form data.",
+        fieldErrors: validatedFields.error.flatten().fieldErrors,
+        errorType: "VALIDATION_ERROR",
+      };
+    }
+
+    const { name, phoneNumber, address, dateofbirth } = validatedFields.data;
+
+    // 3. Prepare data for Prisma
+    // Convert string date from form to JavaScript Date object
+    const formattedDob = dateofbirth ? new Date(dateofbirth) : null;
+
+    // 4. Update the User model
+    await prisma.user.update({
+      where: {
+        id: session.user.id,
+      },
+      data: {
+        name,
+        phoneNumber,
+        address,
+        dateofbirth: formattedDob,
+      },
+    });
+
+    // 5. Revalidate cache to show updated data in the UI
+    revalidatePath("/user/profile"); // Adjust to your actual profile route
+
+    return {
+      success: true,
+      message: "Profile updated successfully!",
+      data: null,
+    };
+  } catch (error) {
+    console.error("Profile Update Error:", error);
+    return {
+      success: false,
+      message: "Something went wrong while updating your profile.",
+      error: error instanceof Error ? error.message : "Internal Server Error",
+      errorType: "DATABASE_ERROR",
     };
   }
 }

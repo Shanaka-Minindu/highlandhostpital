@@ -1,4 +1,6 @@
+import z from "zod";
 import { Department, BannerImage } from "../lib/generated/prisma/client";
+import { patientProfileUpdateSchema } from "@/lib/validators";
 
 export type FieldErrors = Record<string, string[] | undefined>;
 
@@ -79,3 +81,5 @@ export interface Appointment {
   reasonForVisit: string;
   isReviewed: boolean;
 }
+
+export type PatientProfileUpdateInput = z.Infer<typeof patientProfileUpdateSchema>

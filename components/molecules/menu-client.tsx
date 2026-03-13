@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useState } from "react";
 import Link from "next/link";
-import { EllipsisVertical, Home, MoreVertical } from "lucide-react";
+import { EllipsisVertical, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import {
@@ -18,7 +18,7 @@ import { Session } from "next-auth";
 
 interface MenuClientProps {
   menuAvatar: ReactNode;
-  session:Session | null
+  session: Session | null;
 }
 
 const MenuClient = ({ menuAvatar, session }: MenuClientProps) => {
@@ -105,13 +105,15 @@ const MenuClient = ({ menuAvatar, session }: MenuClientProps) => {
             </div>
 
             {/* Sign In / Avatar at the Bottom (as seen in screenshot) */}
-            
-              <SheetFooter className="w-full pl-0">
-            <MobileUserSigninOrAvatar session={session} onMobileActionComplete={closeMobileMenu}/>
-          </SheetFooter>
-            
+
+            <SheetFooter className="w-full pl-0">
+              <MobileUserSigninOrAvatar
+                key={session?.user.id}
+                session={session}
+                onMobileActionComplete={closeMobileMenu}
+              />
+            </SheetFooter>
           </SheetContent>
-          
         </Sheet>
       </div>
     </div>

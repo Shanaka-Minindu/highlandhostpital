@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, User, LayoutDashboard } from "lucide-react";
 
+
 interface MobileUserMenuProps {
   onMobileActionComplete?: () => void;
   session: Session | null;
@@ -28,6 +29,8 @@ const MobileUserSigninOrAvatar = ({
   onMobileActionComplete,
   session,
 }: MobileUserMenuProps) => {
+
+ 
   // 1. Handle Unauthenticated State
   const [openD, setOpenD] = useState(false);
   if (!session?.user) {

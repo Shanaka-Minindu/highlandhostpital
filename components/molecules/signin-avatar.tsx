@@ -3,10 +3,12 @@ import React from "react";
 import InteractiveSignInButton from "./interactive-sign-in-button";
 import { auth } from "@/auth";
 import UserDropdown from "./user-dropdown";
-
+import { useSession } from "next-auth/react"
 
 const SigninAvatar = async () => {
   const session = await auth();
+
+
 
   if (!session?.user) {
     return <InteractiveSignInButton />;
@@ -18,6 +20,7 @@ const SigninAvatar = async () => {
 
   return (
     <UserDropdown
+    key={session.user.id}
       email={email}
       image={image}
       name={userName}
