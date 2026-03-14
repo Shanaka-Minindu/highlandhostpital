@@ -24,23 +24,18 @@ export const signUpSchema = z
     path: ["confirmPassword"], // This sets the error specifically on the confirmPassword field
   });
 
-
-
-
 export const patientProfileUpdateSchema = z.object({
-  name: z
-    .string()
-    .min(4, "Name must be at least 4 characters long."),
-  
+  name: z.string().min(4, "Name must be at least 4 characters long."),
+
   phoneNumber: z
     .string()
     .length(10, "Phone number must be exactly 10 digits.")
-    .regex(/^07\d{8}$/, "Phone number must start with '07' followed by 8 digits."),
-  
-  address: z
-    .string()
-    .optional()
-    .or(z.literal("")), // Handles empty strings from forms
+    .regex(
+      /^07\d{8}$/,
+      "Phone number must start with '07' followed by 8 digits.",
+    ),
+
+  address: z.string().optional().or(z.literal("")), // Handles empty strings from forms
 
   dateofbirth: z
     .string()
@@ -64,4 +59,25 @@ export const patientProfileUpdateSchema = z.object({
       minDate.setFullYear(minDate.getFullYear() - 120);
       return date >= minDate;
     }, "Date of birth cannot be more than 120 years ago."),
+});
+
+export const reviewSchema = z.object({
+  doctorId: z.string().uuid("Invalid doctor ID format."),
+
+  appointmentId: z.string().uuid("Invalid appointment ID format."),
+
+  patientId: z.string().uuid("Invalid patient ID format."),
+
+  rating: z
+    .number({
+      error: "Rating must be a number.",
+    })
+    .int("Rating must be a whole number.") // Disallows decimals
+    .min(1, "Minimum rating is 1.")
+    .max(5, "Maximum rating is 5."),
+
+  testimonialText: z
+    .string()
+    .min(10, "Your review must be at least 10 characters.")
+    .max(150, "Your review cannot exceed 150 characters."),
 });

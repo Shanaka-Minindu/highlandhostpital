@@ -1,6 +1,7 @@
 import Header from "@/components/organisms/header";
 import Footer from "@/components/organisms/footer";
 import { Toaster } from "react-hot-toast";
+import { SessionProvider } from "next-auth/react";
 
 export default function RootLayout({
   children,
@@ -8,6 +9,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <SessionProvider>
     <div className="flex flex-col bg-background-1 min-h-screen">
       <Toaster
         position="top-center"
@@ -41,5 +43,6 @@ export default function RootLayout({
 
       <Footer />
     </div>
+    </SessionProvider>
   );
 }

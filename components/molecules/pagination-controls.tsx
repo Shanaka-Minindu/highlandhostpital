@@ -14,7 +14,7 @@ interface paginationControlsProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  siblingCount: number;
+  siblingCount?: number;
   isDisabled?: boolean;
 }
 

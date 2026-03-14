@@ -48,17 +48,20 @@ const PatientProfilePage = async (props: {
   // but we'll pass the error if the appointment fetch fails.
   const appointmentData = appointmentResponse.data;
 
+  
+
   return (
     <div className="container mx-auto py-10">
       <PatientProfileClient
         patientData={detailsResponse.data!}
-        appointment={appointmentData?.appointment || []}
+        appointments={appointmentData?.appointment || []}
         appointmentId={appointmentId}
         currentPage={appointmentData?.currentPage || currentPage}
         totalPages={appointmentData?.totalPages || 1}
         appointmentError={
           !appointmentResponse.success ? appointmentResponse.error : undefined
         }
+        
       />
     </div>
   );
