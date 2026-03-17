@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-hot-toast";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { getAvailableDoctorSlots } from "@/lib/actions/doctor.actions";
 import { getPendingAppointmentForDoctor } from "@/lib/actions/appointment.actions";
 import { TimeSlot } from "@/types";

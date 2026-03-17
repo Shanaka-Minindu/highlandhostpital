@@ -83,3 +83,28 @@ export interface Appointment {
 }
 
 export type PatientProfileUpdateInput = z.Infer<typeof patientProfileUpdateSchema>
+
+
+export interface createGuestAppointmentProps{
+  doctorId : string;
+  startTime: Date;
+  endTime:Date;
+  date : Date;
+}
+
+export interface GuestAppointment{
+  appointmentId: string;
+  guestIdentifier: string;
+}
+
+export interface ReservationSuccessData{
+  appointmentId : string
+}
+
+export interface AppointmentReservationParams{
+  doctorId : string;
+  userId: string;
+  startTime: Date;
+  endTime:Date;
+  date : Date;
+}

@@ -1,7 +1,9 @@
+import { auth } from "@/auth";
 import DoctorProfileAbout from "@/components/organisms/doctor-profile/doctorprofile-about";
 import DoctorProfileReview from "@/components/organisms/doctor-profile/doctorprofile-review";
 import DoctorProfileTopCard from "@/components/organisms/doctor-profile/doctorprofile-topcard";
 import ScheduleAppointment from "@/components/organisms/doctor-profile/schedule-appointment";
+import { cleanUpReservedAppointment } from "@/lib/actions/appointment.actions";
 import { getDoctorById } from "@/lib/actions/doctor.actions";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -12,6 +14,12 @@ interface Params {
 const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
   const docId = await params;
   const { doctorId } = docId;
+
+  await cleanUpReservedAppointment();
+
+  const session = await auth();
+  const userId = session?.user?.id ? session.user.id : undefined;
+  const role = session?.user?.role ? session.user.role : undefined;
 
   let docData;
 
@@ -71,7 +79,11 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
         </div>
         <div className="md:hidden">
           {" "}
-          <ScheduleAppointment doctorId={doctorData.id} />
+          <ScheduleAppointment
+            doctorId={doctorData.id}
+            userId={userId}
+            userRole={role}
+          />
         </div>
         <DoctorProfileAbout brief={doctorData.brief} name={doctorData.name} />
         <DoctorProfileReview
@@ -80,7 +92,11 @@ const DoctorProfilePage = async ({ params }: { params: Promise<Params> }) => {
         />
       </div>
       <div className="hidden md:block">
-        <ScheduleAppointment doctorId={doctorData.id} />
+        <ScheduleAppointment
+          doctorId={doctorData.id}
+          userId={userId}
+          userRole={role}
+        />
       </div>
     </div>
   );

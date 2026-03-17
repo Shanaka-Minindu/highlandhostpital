@@ -13,10 +13,12 @@ import {
   startOfDay,
   isAfter,
   isBefore,
-  isSameDay, // Added for date comparison logic
+  isSameDay,
+  format, // Added for date comparison logic
 } from "date-fns";
 import { TimeSlot } from "@/types";
 import { Loader2 } from "lucide-react";
+import { useAppointmentReservation } from "@/hooks/useAppointmentReservation";
 
 interface ScheduleAppointmentProps {
   doctorId: string;
@@ -27,12 +29,16 @@ interface ScheduleAppointmentProps {
 const ScheduleAppointment = ({
   doctorId,
   userId,
+  userRole
 }: ScheduleAppointmentProps) => {
-  // Hardcoded ID as per your existing implementation
-  userId = "1d9e9617-e5c3-41b7-8b61-904ff64ddb91";
-
-  const { date, setDate, timeSlots, initialTimeSlot, isLoading } =
-    useAppointmentSlots(doctorId, userId);
+  const {
+    date,
+    setDate,
+    timeSlots,
+    initialTimeSlot,
+    isLoading,
+    fetchSlotsForDate,
+  } = useAppointmentSlots(doctorId, userId);
 
   const [userSelectedSlot, setUserSelectedSlot] = useState<TimeSlot | null>(
     null,
@@ -49,6 +55,15 @@ const ScheduleAppointment = ({
       setDate(initialTimeSlot.startTimeUTC);
     }
   }, []);
+
+ const {isPending,mutate:reserveAppointment} =useAppointmentReservation({
+    userId,
+    onConflict: () => {
+      setUserSelectedSlot(null);
+
+      if (date) fetchSlotsForDate(date);
+    },
+  });
 
   /**
    * LOGIC FOR AUTOMATIC SELECTION:
@@ -87,12 +102,24 @@ const ScheduleAppointment = ({
     }
   };
 
-  const continueAction = () => {
+ const continueAction = () => {
+    // 1. Guard clause: ensure a slot is actually selected
     if (!activeSlot) {
       alert("Please select a time slot first.");
       return;
     }
-    alert(`Pressed continue for ${activeSlot.startTime}`);
+
+    // 2. Extract and format the data for the reservation payload
+    // We use activeSlot.startTimeUTC to get the correct date reference
+    const payload = {
+      doctorId,
+      date: format(activeSlot.startTimeUTC, "yyyy-MM-dd"),
+      startTime: activeSlot.startTime, // Already "HH:mm" from the TimeSlot type
+      endTime: activeSlot.endTime,     // Already "HH:mm" from the TimeSlot type
+    };
+
+    // 3. Call the mutate function from useAppointmentReservation
+    reserveAppointment(payload);
   };
 
   if (!isMounted) {
@@ -170,12 +197,20 @@ const ScheduleAppointment = ({
         </div>
 
         <Button
-          className="w-full py-6 text-lg hover:bg-blue-600 mt-4"
-          onClick={continueAction}
-          disabled={!activeSlot || isLoading}
-        >
-          Continue to Next Step
-        </Button>
+  className="w-full py-6 text-lg hover:bg-blue-600 mt-4"
+  onClick={continueAction}
+  // Disable button if loading slots, processing reservation, or no slot selected
+  disabled={!activeSlot || isLoading || isPending || userRole ==="ADMIN"}
+>
+  {isPending ? (
+    <>
+      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+      Reserving...
+    </>
+  ) : (
+    "Continue to Next Step"
+  )}
+</Button>
       </CardContent>
     </Card>
   );
