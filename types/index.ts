@@ -1,6 +1,9 @@
 import z from "zod";
 import { Department, BannerImage } from "../lib/generated/prisma/client";
-import { patientProfileUpdateSchema } from "@/lib/validators";
+import {
+  patientDetailsSchema,
+  patientProfileUpdateSchema,
+} from "@/lib/validators";
 
 export type FieldErrors = Record<string, string[] | undefined>;
 
@@ -82,29 +85,68 @@ export interface Appointment {
   isReviewed: boolean;
 }
 
-export type PatientProfileUpdateInput = z.Infer<typeof patientProfileUpdateSchema>
+export type PatientProfileUpdateInput = z.Infer<
+  typeof patientProfileUpdateSchema
+>;
 
-
-export interface createGuestAppointmentProps{
-  doctorId : string;
+export interface createGuestAppointmentProps {
+  doctorId: string;
   startTime: Date;
-  endTime:Date;
-  date : Date;
+  endTime: Date;
+  date: Date;
 }
 
-export interface GuestAppointment{
+export interface GuestAppointment {
   appointmentId: string;
   guestIdentifier: string;
 }
 
-export interface ReservationSuccessData{
-  appointmentId : string
+export interface ReservationSuccessData {
+  appointmentId: string;
 }
 
-export interface AppointmentReservationParams{
-  doctorId : string;
+export interface AppointmentReservationParams {
+  doctorId: string;
   userId: string;
   startTime: Date;
-  endTime:Date;
-  date : Date;
+  endTime: Date;
+  date: Date;
+}
+
+export interface AppointmentDetails {
+  appointmentId: string;
+  doctorId: string;
+  doctorName: string;
+  doctorSpecialty: string;
+  doctorImage?: string | null;
+  date: string;
+  startTime: string;
+  endTime: string;
+  patientType?: "MYSELF" | "SOMEONE_ELSE";
+  patientName?: string;
+  patientDateOfBirth?: Date | null;
+  phoneNumber?: string | null;
+  reasonForVisit?: string | null;
+  additionalNotes?: string | null;
+  relationShip?: string | null;
+}
+
+export interface PatientDetails {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  dateOfBirth: string;
+}
+
+export type PatientDetailsFormValues = z.infer<typeof patientDetailsSchema>;
+
+export type AppointmentSubmissionData = PatientDetailsFormValues & {
+  appointmentId: string;
+  doctorId: string;
+  date: string;
+  startTime:string;
+  endTime :string;
+  isSelf:boolean;
+  phone : string | undefined | null;
+  patientDateOfBirth? : string
 }

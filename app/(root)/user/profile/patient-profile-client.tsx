@@ -6,6 +6,7 @@ import EditPatientProfile from "@/components/molecules/user-profile/edit-patient
 import ReviewDialog from "@/components/molecules/user-profile/review-dialog";
 import PersonalInformation from "@/components/organisms/user-profile/personal-information";
 import ProfileHeader from "@/components/organisms/user-profile/profileHeader";
+import { Button } from "@/components/ui/button";
 import { CancelAppointment } from "@/lib/actions/shared.actions";
 import { createNewTestimonial } from "@/lib/actions/testimonials.action";
 import { reviewSchema } from "@/lib/validators";
@@ -103,7 +104,8 @@ const PatientProfileClient = ({
         dialogClose={() => setIsOpen(false)}
         patientData={patientData}
       />
-      <ProfileHeader userData={patientData} />
+      <ProfileHeader userData={patientData} appointmentId={appointmentId} />
+      
       <PersonalInformation
         personalInfo={patientData}
         editBtn={() => setIsOpen(true)}

@@ -8,15 +8,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UploadButton } from "@/lib/uploadthing";
 import { updateUserImage } from "@/lib/actions/user.actions";
 import { PatientProfile } from "@/types";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 interface ProfileHeaderProps {
   userData: PatientProfile;
   appointmentId?: string;
 }
 
-const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
+const ProfileHeader = ({ userData,appointmentId }: ProfileHeaderProps) => {
   const [isUploading, setIsUploading] = useState(false);
-  
+  const router = useRouter()
   // 1. Create a ref to the hidden UploadButton container
   const uploadButtonRef = useRef<HTMLDivElement>(null);
 
@@ -36,6 +38,7 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
   };
 
   return (
+    <div className="flex justify-between items-center">
     <div className="flex items-center gap-6 py-8">
       {/* Profile Image Section */}
       <div className="relative group">
@@ -108,6 +111,10 @@ const ProfileHeader = ({ userData }: ProfileHeaderProps) => {
             {userData.email}
         </p>
       </div>
+    </div>
+    {appointmentId?<Button onClick={()=>{
+      router.push(`/appointments/patient-details?appointmentId=${appointmentId}`)
+    }}> Back to Appointment</Button>:<></>}
     </div>
   );
 };

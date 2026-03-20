@@ -3,18 +3,27 @@
 import { prisma } from "@/db/prisma";
 import {
   AppointmentReservationParams,
+  AppointmentSubmissionData,
   createGuestAppointmentProps,
   GuestAppointment,
   ReservationSuccessData,
   ServerActionResponse,
 } from "@/types";
-import { addMinutes, format, isAfter, isSameSecond } from "date-fns";
+import {
+  addMinutes,
+  format,
+  isAfter,
+  isBefore,
+  isSameSecond,
+  parse,
+} from "date-fns";
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { getAppTimeZone } from "../config";
 import { revalidatePath } from "next/cache";
 import { v4 as uuidv4 } from "uuid";
 import { auth } from "@/auth";
-import { AppointmentStatus } from "../generated/prisma";
+import { AppointmentStatus, PatientType, Prisma } from "../generated/prisma";
+import { patientDetailsSchema } from "../validators";
 
 interface PendingAppointmentProps {
   appointment: {
@@ -236,8 +245,6 @@ export async function createGuestAppointment({
   }
 }
 
-
-
 export async function createOrUpdateAppointment({
   date,
   doctorId,
@@ -374,7 +381,9 @@ export async function createOrUpdateAppointment({
   }
 }
 
-export async function cleanUpReservedAppointment(): Promise<ServerActionResponse<undefined>> {
+export async function cleanUpReservedAppointment(): Promise<
+  ServerActionResponse<undefined>
+> {
   try {
     const now = new Date();
 
@@ -402,4 +411,316 @@ export async function cleanUpReservedAppointment(): Promise<ServerActionResponse
       errorType: "DATABASE_ERROR",
     };
   }
+}
+
+export type AppointmentWithRelations = Prisma.AppointmentGetPayload<{
+  include: {
+    doctor: {
+      include: {
+        doctorProfile: true;
+      };
+    };
+  };
+}>;
+
+export async function getAppointmentData({
+  appointmentId,
+}: {
+  appointmentId: string;
+}): Promise<ServerActionResponse<AppointmentWithRelations>> {
+  try {
+    // 1. Fetch the appointment with nested relations
+    const appointment = await prisma.appointment.findUnique({
+      where: { appointmentId },
+      include: {
+        doctor: {
+          include: {
+            doctorProfile: true,
+          },
+        },
+      },
+    });
+
+    // 2. Check if appointment exists
+    if (!appointment) {
+      return {
+        success: false,
+        message: "Appointment session not found. It may have been cleared.",
+        errorType: "NOT_FOUND",
+      };
+    }
+
+    // 3. Check if the status is still Pending
+    // If it's CONFIRMED or CASH, it shouldn't be edited in the patient-details flow
+    if (appointment.status !== "PAYMENT_PENDING") {
+      return {
+        success: false,
+        message: "This appointment is no longer in the pending state.",
+        errorType: "INVALID_STATUS",
+      };
+    }
+
+    // 4. Check if the reservation has expired
+    if (appointment.reservationExpiresAt) {
+      const now = new Date();
+      const hasExpired = isBefore(
+        new Date(appointment.reservationExpiresAt),
+        now,
+      );
+
+      if (hasExpired) {
+        return {
+          success: false,
+          message:
+            "Your reservation session has expired. Please select the slot again.",
+          errorType: "RESERVATION_EXPIRED",
+        };
+      }
+    }
+
+    // 5. Success
+    return {
+      success: true,
+      message: "Appointment data retrieved successfully.",
+      data: appointment as AppointmentWithRelations,
+    };
+  } catch (error) {
+    console.error("Get Appointment Data Error:", error);
+    return {
+      success: false,
+      message: "An error occurred while fetching appointment details.",
+      error: error instanceof Error ? error.message : "Internal Error",
+    };
+  }
+}
+
+export async function updateGuestWithUser({
+  guestIdentifier,
+}: {
+  guestIdentifier: string;
+}): Promise<ServerActionResponse<{ appointmentId?: string }>> {
+  try {
+    // 1. Check if the session is available
+    const session = await auth();
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: "Session expired or user not authenticated. Please log in.",
+        errorType: "UNAUTHORIZED",
+      };
+    }
+
+    const currentUserId = session.user.id;
+
+    // 2. Find data related to the guestIdentifier
+    const appointment = await prisma.appointment.findFirst({
+      where: { guestIdentifier },
+    });
+
+    if (!appointment) {
+      return {
+        success: false,
+        message: "No appointment found for this session identifier.",
+        errorType: "NOT_FOUND",
+      };
+    }
+
+    // 3. Check if the reservation has expired
+    if (appointment.reservationExpiresAt) {
+      const now = new Date();
+      const isExpired = isBefore(
+        new Date(appointment.reservationExpiresAt),
+        now,
+      );
+
+      if (isExpired) {
+        return {
+          success: false,
+          message:
+            "Your reservation time has expired. Please select a new slot.",
+          errorType: "RESERVATION_EXPIRED",
+        };
+      }
+    }
+
+    // 4. Check if already have a userId related to that guestIdentifier
+    if (appointment.userId) {
+      return {
+        success: false,
+        message: "This appointment is already linked to a registered account.",
+        errorType: "ALREADY_LINKED",
+      };
+    }
+
+    // 5. Success Logic: Update the record
+    const updatedAppointment = await prisma.appointment.update({
+      where: { appointmentId: appointment.appointmentId },
+      data: {
+        userId: currentUserId,
+        // Optional: you can clear guestIdentifier now that it's linked
+        // guestIdentifier: null
+      },
+    });
+
+    revalidatePath(`/doctors/${updatedAppointment.doctorId}`);
+
+    return {
+      success: true,
+      message: "Appointment successfully linked to your account.",
+      data: { appointmentId: updatedAppointment.appointmentId },
+    };
+  } catch (error) {
+    console.error("Update Guest Error:", error);
+    return {
+      success: false,
+      message: "An error occurred while linking your account.",
+      error: error instanceof Error ? error.message : "Internal Error",
+    };
+  }
+}
+
+interface AppointmentData {
+  appointmentId?: string;
+}
+export async function processAppointmentBooking(
+  data: AppointmentSubmissionData,
+): Promise<ServerActionResponse<AppointmentData>> {
+  try {
+    // 1. Validate Form Data with Zod
+    const validation = patientDetailsSchema.safeParse(data);
+    if (!validation.success) {
+      return {
+        success: false,
+        message: "Invalid patient details.",
+        fieldErrors: validation.error.flatten().fieldErrors,
+        errorType: "VALIDATION_ERROR",
+      };
+    }
+
+    // 2. Auth Check
+    const session = await auth();
+    const currentUserId = session?.user?.id;
+    if (!session || !currentUserId) {
+      return {
+        success: false,
+        message: "Unauthorized access.",
+        errorType: "UNAUTHORIZED",
+      };
+    }
+
+    // 3. Time Handling (Convert App Time to UTC)
+    const timezone = getAppTimeZone();
+    const dateStr = format(new Date(data.date), "yyyy-MM-dd");
+    const startTimeUTC = fromZonedTime(
+      `${dateStr} ${data.startTime}`,
+      timezone,
+    );
+    const endTimeUTC = fromZonedTime(`${dateStr} ${data.endTime}`, timezone);
+    const now = new Date();
+
+    // 4. Fetch Existing Appointment (Must match ID and current User)
+    const existingAppointment = await prisma.appointment.findFirst({
+      where: {
+        appointmentId: data.appointmentId,
+        userId: currentUserId, // Matches Guest or Logged-in User
+      },
+    });
+
+    // Determine if the existing record is still valid (Pending & Not Expired)
+    const isStillValid =
+      existingAppointment &&
+      existingAppointment.status === "PAYMENT_PENDING" &&
+      existingAppointment.reservationExpiresAt &&
+      isAfter(new Date(existingAppointment.reservationExpiresAt), now);
+
+    let finalAppointmentId: string;
+
+    // 5. Logic: UPDATE vs CREATE
+    if (isStillValid && existingAppointment) {
+      // Scenario: Reservation is still active, just update details
+      const updated = await prisma.appointment.update({
+        where: { appointmentId: existingAppointment.appointmentId },
+        data: mapFormDataToDb(data, currentUserId),
+      });
+      finalAppointmentId = updated.appointmentId;
+    } else {
+      // Scenario: Expired or Missing. Check slot availability for a fresh record
+      const isAvailable = await checkSlotAvailability(
+        data.doctorId,
+        startTimeUTC,
+        endTimeUTC,
+        data.appointmentId, // Exclude the expired one from check
+      );
+
+      if (!isAvailable) {
+        return {
+          success: false,
+          message:
+            "The session expired and the slot was taken. Please select a new time.",
+          errorType: "SLOT_EXPIRED_AND_TAKEN",
+        };
+      }
+
+      // Get fresh expiry from settings
+      const settings = await prisma.appSettings.findFirst({
+        where: { id: "global" },
+      });
+      const expiryTime = addMinutes(
+        now,
+        settings?.slotReservationDuration || 10,
+      );
+
+      const newRecord = await prisma.appointment.create({
+        data: {
+          ...mapFormDataToDb(data, currentUserId),
+          doctorId: data.doctorId,
+          appointmentStartUTC: startTimeUTC,
+          appointmentEndUTC: endTimeUTC,
+          reservationExpiresAt: expiryTime,
+          status: "PAYMENT_PENDING",
+        },
+      });
+      finalAppointmentId = newRecord.appointmentId;
+    }
+
+    // 6. Cleanup and Revalidate
+    revalidatePath(
+      `/appointment/patient-details/appointmentId=${finalAppointmentId}`,
+    );
+
+    return {
+      success: true,
+      message: "Details saved successfully.",
+      data: { appointmentId: finalAppointmentId },
+    };
+  } catch (error) {
+    console.error("Process Booking Error:", error);
+    return {
+      success: false,
+      message: "An error occurred while saving appointment details.",
+      error: error instanceof Error ? error.message : "Internal Error",
+    };
+  }
+}
+
+/**
+ * HELPER: Maps Zod/Form data to Prisma Model Fields
+ */
+function mapFormDataToDb(data: AppointmentSubmissionData, userId: string) {
+  // Handle Date of Birth parsing if provided (from DD/MM/YYYY)
+  let dob: Date | null = null;
+  if (data.patientDateOfBirth) {
+    dob = parse(data.patientDateOfBirth, "dd/MM/yyyy", new Date());
+  }
+
+  return {
+    userId: userId,
+    patientName: data.fullName,
+    patientType: data.patientType, // "MYSELF" or "SOMEONE_ELSE"
+    patientRelation: data.relationship || null,
+    phoneNumber: data.useAlternatePhone ? data.phone : data.phone, // Logic based on your toggle
+    reasonForVisit: data.reason,
+    additionalNotes: data.notes || null,
+    patientdateofbirth: dob,
+  };
 }

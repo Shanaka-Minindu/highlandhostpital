@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parse, isValid } from "date-fns";
 
 export const loginSchema = z.object({
   email: z.string().email("Email not valid.").min(4, "Email too short"),
@@ -81,3 +82,65 @@ export const reviewSchema = z.object({
     .min(10, "Your review must be at least 10 characters.")
     .max(150, "Your review cannot exceed 150 characters."),
 });
+
+// 1. Reusable Phone Validation Schema
+const phoneValidationSchema = z
+  .string()
+  .length(10, "Phone number must be exactly 10 digits.")
+  .regex(/^07\d{8}$/, "Phone number must start with 07 and contain only numbers.");
+
+// 2. Reusable Date String Schema (DD/MM/YYYY)
+const validDateString = z
+  .string()
+  .min(1, "Date is required.")
+  .refine((val) => {
+    // Parse the string using the specific format
+    const parsedDate = parse(val, "dd/MM/yyyy", new Date());
+    // Ensure it's a valid calendar date (e.g., rejects Feb 30th)
+    return isValid(parsedDate);
+  }, "Invalid date. Please use DD/MM/YYYY format.");
+
+// 3. Base Schema (Common Fields)
+const baseSchema = z.object({
+  email: z.string().email("Invalid email address.").readonly(), // Read-only handled by UI, validated here
+  reason: z.string().min(1, "Reason for visit is required."),
+  notes: z.string().optional(),
+  useAlternatePhone: z.boolean().optional(),
+  phone: z.string().optional(),
+});
+
+// 4. MYSELF Schema
+const mySelfSchema = baseSchema.extend({
+  patientType: z.literal("MYSELF"),
+  fullName: z.string().min(1, "Full name is required."),
+  dateOfBirth: z.string().optional(),
+  relationship: z.string().optional(),
+});
+
+// 5. SOMEONE_ELSE Schema
+const someoneElseSchema = baseSchema.extend({
+  patientType: z.literal("SOMEONE_ELSE"),
+  fullName: z.string().min(1, "Full name is required."),
+  relationship: z.string().min(1, "Relationship is required."),
+  dateOfBirth: validDateString, // Required and validated
+});
+
+// 6. Final Combined Schema with Conditional Validation
+export const patientDetailsSchema = z
+  .discriminatedUnion("patientType", [mySelfSchema, someoneElseSchema])
+  .superRefine((data, ctx) => {
+    // Check if alternate phone is checked
+    if (data.useAlternatePhone) {
+      const phoneResult = phoneValidationSchema.safeParse(data.phone);
+      
+      if (!phoneResult.success) {
+        // Attach the error to the 'phone' field specifically
+        phoneResult.error.issues.forEach((issue) => {
+          ctx.addIssue({
+            ...issue,
+            path: ["phone"],
+          });
+        });
+      }
+    }
+  });
