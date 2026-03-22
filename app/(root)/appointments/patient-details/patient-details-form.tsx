@@ -3,7 +3,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isValid, parse } from "date-fns";
+import { format, formatDate, isValid, parse } from "date-fns";
 import { Phone, Calendar as CalendarIcon, Pencil } from "lucide-react";
 import { MdEdit, MdPhone } from "react-icons/md";
 import {
@@ -79,8 +79,8 @@ const PatientDetailsForm = ({
       phone: "", // This is for the alternate phone input
       useAlternatePhone: initialStateOfAlternativePhone,
 
-      reason: "",
-      notes: "",
+      reason: appointmentDetailsForClient?.reasonForVisit?appointmentDetailsForClient?.reasonForVisit:"",
+      notes: appointmentDetailsForClient.additionalNotes? appointmentDetailsForClient.additionalNotes : "",
     },
   });
 
@@ -99,6 +99,7 @@ const PatientDetailsForm = ({
     }
 
     const bookingToastId = toast.loading("Booking Processing.....");
+    
 
     try {
       const submissionData: AppointmentSubmissionData = {
@@ -109,7 +110,7 @@ const PatientDetailsForm = ({
         startTime: appointmentDetailsForClient.startTime,
         endTime: appointmentDetailsForClient.endTime,
         isSelf: appointmentDetailsForClient.patientType === "MYSELF",
-        phone: data.phone ?? undefined,
+        phone: data.phone ?data.phone: patientDetailsForClient.phoneNumber,
         patientDateOfBirth:
           appointmentDetailsForClient.patientType === "SOMEONE_ELSE" &&
           data.dateOfBirth &&
@@ -118,7 +119,7 @@ const PatientDetailsForm = ({
                 parse(data.dateOfBirth, "dd/MM/yyyy", new Date()),
                 "yyyy-MM-dd",
               )
-            : undefined,
+            : formatDate(patientDetailsForClient.dateOfBirth,"dd/MM/yyyy") ,
       };
 
       const result = await processAppointmentBooking(submissionData);
@@ -458,6 +459,7 @@ const PatientDetailsForm = ({
                 <FormLabel className="font-bold">Additional Notes</FormLabel>
                 <FormControl>
                   <Textarea
+                  
                     placeholder="Add any additional information about your visit"
                     className="min-h-[120px] resize-none"
                     {...field}

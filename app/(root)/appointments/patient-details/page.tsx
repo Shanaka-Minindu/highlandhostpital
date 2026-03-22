@@ -103,7 +103,7 @@ const PatientDetailsPage = async ({
   );
 
   const appointmentDetailsForClient: AppointmentDetails = {
-    appointmentId: appointment.appointmentId,
+    appointmentId: appointment.appointmentId, 
     doctorId: appointment.doctorId,
     doctorName: appointment.doctor.name,
     doctorSpecialty:
