@@ -155,3 +155,19 @@ export interface AppointmentDataWithBilling extends AppointmentDetails{
   fee:number;
   patientEmail: string;
 }
+
+export interface AppointmentSuccessData{
+  appointmentId:string;
+  doctorId:string;
+  doctorName:string;
+  specialty:string;
+  reasonForVisit:string;
+  paymentId:string;
+  amountPaid:number;
+  paymentMethod:string;
+  date:string;
+  startTime:string;
+  patientName:string;
+  email:string;
+  phone:string;
+}

@@ -4,6 +4,7 @@ import { prisma } from "@/db/prisma";
 import {
   AppointmentReservationParams,
   AppointmentSubmissionData,
+  AppointmentSuccessData,
   createGuestAppointmentProps,
   GuestAppointment,
   ReservationSuccessData,
@@ -873,7 +874,8 @@ export async function approvePaypalOrder({
       await updateAppointmentToBePaid(appointmentId, {
         id: captureData.id,
         email: captureData.payer.email_address,
-        pricePaid: captureData.purchase_units?.payments?.captures[0]?.amount?.value,
+        pricePaid:
+          captureData.purchase_units?.payments?.captures[0]?.amount?.value,
         status: captureData.status,
       });
 
@@ -977,10 +979,10 @@ export async function confirmCashAppointment({
     // 1. Fetch the current appointment to check status
     const appointment = await prisma.appointment.findUnique({
       where: { appointmentId },
-      select: { 
-        status: true, 
+      select: {
+        status: true,
         doctorId: true,
-        reservationExpiresAt: true 
+        reservationExpiresAt: true,
       },
     });
 
@@ -1009,7 +1011,7 @@ export async function confirmCashAppointment({
         status: AppointmentStatus.CASH,
         paymentMethod: "CASH",
         // We clear the reservation expiry since it is now a committed appointment
-        reservationExpiresAt: null, 
+        reservationExpiresAt: null,
       },
     });
 
@@ -1027,6 +1029,76 @@ export async function confirmCashAppointment({
     return {
       success: false,
       message: "An unexpected error occurred while confirming the appointment.",
+      error: error instanceof Error ? error.message : "Internal Error",
+    };
+  }
+}
+
+export async function getSuccessAppointmentData(
+  appointmentId: string,
+): Promise<ServerActionResponse<AppointmentSuccessData>> {
+  try {
+    const timezone = getAppTimeZone();
+
+    // 1. Fetch appointment with nested Doctor and DoctorProfile info
+    const appointment = await prisma.appointment.findUnique({
+      where: { appointmentId },
+      include: {
+        doctor: {
+          include: {
+            doctorProfile: true,
+          },
+        },
+        user: true, // To get the registered patient's email/info if available
+      },
+    });
+
+    if (!appointment) {
+      return {
+        success: false,
+        message: "Appointment not found.",
+        errorType: "NOT_FOUND",
+      };
+    }
+
+    // 2. Format the Date and Time from UTC to Application Timezone
+    const zonedDate = toZonedTime(appointment.appointmentStartUTC, timezone);
+    const dateString = format(zonedDate, "yyyy-MM-dd");
+    const timeString = format(zonedDate, "HH:mm");
+
+    // 3. Map the data to the AppointmentSuccessData interface
+    const data: AppointmentSuccessData = {
+      appointmentId: appointment.appointmentId,
+      doctorId: appointment.doctorId,
+      doctorName: appointment.doctor.name,
+      specialty: appointment.doctor.doctorProfile?.specialty || "General",
+      reasonForVisit: appointment.reasonForVisit || "General Consultation",
+      
+      // Payment details
+      paymentId: appointment.appointmentId, // Using AppId as a ref if no transaction record is passed
+      amountPaid: 150, // You might need to fetch this from a Transaction table or a 'fee' field
+      paymentMethod: appointment.paymentMethod || "N/A",
+      
+      // Appointment Time
+      date: dateString,
+      startTime: timeString,
+      
+      // Patient details (Fall back to appointment fields if user is guest)
+      patientName: appointment.patientName, 
+      email: appointment.user?.email || "Guest",
+      phone: appointment.phoneNumber || appointment.user?.phoneNumber || "N/A",
+    };
+
+    return {
+      success: true,
+      message: "Data retrieved successfully.",
+      data,
+    };
+  } catch (error) {
+    console.error("Get Success Data Error:", error);
+    return {
+      success: false,
+      message: "An error occurred while fetching success details.",
       error: error instanceof Error ? error.message : "Internal Error",
     };
   }
